@@ -6,6 +6,7 @@ import pytest
 import asyncio
 import aiohttp
 from aioresponses import aioresponses
+from urllib.parse import urlencode
 
 from services.base import get, APIError
 
@@ -29,28 +30,29 @@ async def test_get_returns_json(session):
     """
     A 200 response should return the parsed JSON body as a dict.
     """
+    status_code = 200
     mock_response = {"result": "ok", "value": 17}
 
     with aioresponses() as mock:
-        mock.get(BASE_URL, payload=mock_response, status=200)
+        mock.get(BASE_URL, payload=mock_response, status=status_code)
         result = await get(session, BASE_URL, params={})
 
     assert result == mock_response
 
-
+        
 @pytest.mark.asyncio
 async def test_get_passes_params(session):
     """
     Query params should be include in the request.
     """
     params = {"address": "123 Seaseme St", "format": "json"}
+    full_url = f"{BASE_URL}?{urlencode(params)}"
 
     with aioresponses() as mock:
-        mock.get(BASE_URL, payload={"result": "ok"}, status=200)
+        mock.get(full_url, payload={"result": "ok"}, status=200)
         await get(session, BASE_URL, params=params)
-
-    # aioresponse captures the requests made 
-    mock.assert_called_once()
+        # aioresponse captures the requests made 
+        mock.assert_called_once()
 
 
 # Error 
